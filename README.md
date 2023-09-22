@@ -1,0 +1,1 @@
+Super-opinionated tool that will try to make a shippable wasm file of a bevy app with a minimum amount of setup.
