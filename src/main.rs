@@ -24,8 +24,14 @@ struct Build {
     #[clap(index = 1)]
     package: Option<String>,
 
+    /// the name of the package inside the dist folder
+    /// does nothing if dist-dir is provided
     #[clap(long)]
     dir_name: Option<String>,
+
+    /// Path to where to put the resulting app.js and app.wasm
+    #[clap(long)]
+    dist_dir: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -47,15 +53,17 @@ fn main() -> Result<()> {
                     )
                     .name
             });
-            let workspace_root = &cargo_data().workspace_root;
-            let dist_root = format!("{workspace_root}/dist");
 
             info!("Generating package: {package_name}...");
 
             arg.base.release = true;
 
-            let dir_name = arg.dir_name.as_ref().unwrap_or(package_name);
-            let dist_dir = format!("{dist_root}/{dir_name}");
+            let dist_dir = arg.dist_dir.unwrap_or_else(|| {
+                let workspace_root = &cargo_data().workspace_root;
+                let dist_root = format!("{workspace_root}/dist");
+                let dir_name = arg.dir_name.as_ref().unwrap_or(package_name);
+                format!("{dist_root}/{dir_name}")
+            });
 
             let dist_result = arg.base.run(package_name)?;
 
