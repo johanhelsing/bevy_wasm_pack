@@ -32,6 +32,9 @@ struct Build {
     /// Path to where to put the resulting app.js and app.wasm
     #[clap(long)]
     dist_dir: Option<String>,
+
+    #[clap(long)]
+    dev: bool,
 }
 
 fn main() -> Result<()> {
@@ -56,7 +59,7 @@ fn main() -> Result<()> {
 
             info!("Generating package: {package_name}...");
 
-            arg.base.release = true;
+            arg.base.release = !arg.dev;
 
             let dist_dir = arg.dist_dir.unwrap_or_else(|| {
                 let workspace_root = &cargo_data().workspace_root;
@@ -67,9 +70,11 @@ fn main() -> Result<()> {
 
             let dist_result = arg.base.run(package_name)?;
 
-            xtask_wasm::WasmOpt::level(3)
-                .shrink(3)
-                .optimize(&dist_result.wasm)?;
+            if !arg.dev {
+                xtask_wasm::WasmOpt::level(3)
+                    .shrink(3)
+                    .optimize(&dist_result.wasm)?;
+            }
 
             let size = std::fs::metadata(&dist_result.wasm)?.len();
             info!("File size: {}", bytesize::ByteSize(size));
